@@ -122,9 +122,9 @@ bin/%: %.json bin
 	@#test -s        "$@-$(OS)-${VER}.tmp"   #&&   mv -vf "$@-$(OS)-${VER}"{.tmp,}  ||  rm -vf "$@-$(OS)-${VER}.tmp"
 	@echo "* IF ' defined(EXT_$*) -> EXEC (EXT_$*)' #" # "IF '$(EXT_$*)' -> '$(EXT_$*)' #"
 	@test -z  "$(EXT_$*)" || $(SHELL) -ec '($(EXT_$*)) && touch "$@-$(OS)-${VER}";'
-	@echo "* IF '!defined(EXT_$*) -> LN" "$@-$(OS)-${VER}"{.tmp,}
-	@test -n  "$(EXT_$*)" ||     ln -sfF "$*-$(OS)-${VER}"{.tmp,}
-	@echo "* LN '$@-$(OS)-${VER}' -> '$@' #"
+	@echo "* IF '!defined(EXT_$*) -> LN  '$*-$(OS)-${VER}.tmp' -> '$@-$(OS)-${VER}' #"
+	@test -n  "$(EXT_$*)" ||     ln -sfF "$*-$(OS)-${VER}.tmp"    "$@-$(OS)-${VER}" #
+	@echo "* LN '$*-$(OS)-${VER}' -> '$@' #"
 	@ln -sfF    "$*-$(OS)-${VER}"    "$@" #&& touch "$@-$(OS)-${VER}"
 	@echo "* CHMOD '$@-$(OS)-${VER}' '$@' '$(ARCH)' #"
 	@chmod a+rx  "$@-$(OS)-${VER}"
