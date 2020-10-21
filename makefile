@@ -122,10 +122,10 @@ bin/%: %.json bin
 	@#test -s        "$@-$(OS)-${VER}.tmp"   #&&   mv -vf "$@-$(OS)-${VER}"{.tmp,}  ||  rm -vf "$@-$(OS)-${VER}.tmp"
 	@echo "* IF ' defined(EXT_$*) -> EXEC (EXT_$*)' #" # "IF '$(EXT_$*)' -> '$(EXT_$*)' #"
 	@test -z  "$(EXT_$*)" || $(SHELL) -ec '($(EXT_$*)) && touch "$@-$(OS)-${VER}";'
-	@echo "* IF '!defined(EXT_$*) -> MV" "$@-$(OS)-${VER}"{.tmp,}
-	@test -n  "$(EXT_$*)" ||       mv -f "$@-$(OS)-${VER}"{.tmp,}
+	@echo "* IF '!defined(EXT_$*) -> LN" "$@-$(OS)-${VER}"{.tmp,}
+	@test -n  "$(EXT_$*)" ||     ln -sfF "$*-$(OS)-${VER}"{.tmp,} ||
 	@echo "* LN '$@-$(OS)-${VER}' -> '$@' #"
-	@ln -sfF   "$*-$(OS)-${VER}"     "$@" && touch "$@-$(OS)-${VER}"
+	@ln -sfF    "$*-$(OS)-${VER}"    "$@" #&& touch "$@-$(OS)-${VER}"
 	@echo "* CHMOD '$@-$(OS)-${VER}' '$@' '$(ARCH)' #"
 	@chmod a+rx  "$@-$(OS)-${VER}"
 	@echo "* CHK: $@-$(OS)-${VER} --help"
@@ -135,4 +135,4 @@ bin:
 	mkdir -p "$@"
 
 clean:
-	rm -rf $(addprefix bin/, $(TOOLS) ) $(addsuffix .json $(TOOLS) )
+	rm -rf $(addprefix bin/, $(TOOLS) ) $(addsuffix .json, $(TOOLS) )
