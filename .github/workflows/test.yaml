@@ -11,14 +11,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Update package index
-      run:  sudo apt update
-    - name: Install packages
-      run:  sudo apt install -y curl make
     - name: Build with make
       run:  make -C . -j 1
     - name: Upload built directory
