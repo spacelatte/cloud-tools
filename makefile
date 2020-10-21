@@ -123,7 +123,7 @@ bin/%: %.json bin
 	@echo "* IF ' defined(EXT_$*) -> EXEC (EXT_$*)' #" # "IF '$(EXT_$*)' -> '$(EXT_$*)' #"
 	@test -z  "$(EXT_$*)" || $(SHELL) -ec '($(EXT_$*)) && touch "$@-$(OS)-${VER}";'
 	@echo "* IF '!defined(EXT_$*) -> LN" "$@-$(OS)-${VER}"{.tmp,}
-	@test -n  "$(EXT_$*)" ||     ln -sfF "$*-$(OS)-${VER}"{.tmp,} ||
+	@test -n  "$(EXT_$*)" ||     ln -sfF "$*-$(OS)-${VER}"{.tmp,}
 	@echo "* LN '$@-$(OS)-${VER}' -> '$@' #"
 	@ln -sfF    "$*-$(OS)-${VER}"    "$@" #&& touch "$@-$(OS)-${VER}"
 	@echo "* CHMOD '$@-$(OS)-${VER}' '$@' '$(ARCH)' #"
