@@ -120,11 +120,12 @@ bin/%: %.json bin
 	@curl --compressed -#4Lf -o "$@-$(OS)-${VER}.tmp" "$(URL_$*)" $$(test -s '$@' && echo -z "$@-$(OS)-${VER}" )
 	@#echo "* IF size($@-$(OS)-${VER}.tmp)"  # "-> MV"    "$@-$(OS)-${VER}"{.tmp,}
 	@#test -s        "$@-$(OS)-${VER}.tmp"   #&&   mv -vf "$@-$(OS)-${VER}"{.tmp,}  ||  rm -vf "$@-$(OS)-${VER}.tmp"
-	@echo "* IF 'defined(EXT_$*) -> EXEC (EXT_$*)' #" # "IF '$(EXT_$*)' -> '$(EXT_$*)' #"
+	@echo "* IF ' defined(EXT_$*) -> EXEC (EXT_$*)' #" # "IF '$(EXT_$*)' -> '$(EXT_$*)' #"
 	@test -z  "$(EXT_$*)" || $(SHELL) -ec '($(EXT_$*)) && touch "$@-$(OS)-${VER}";'
-	@#echo "* IF '!defined(EXT_$*) -> MV" "$@-$(OS)-${VER}"{.out,}
-	@#test -n  "$(EXT_$*)" ||      mv -vf "$@-$(OS)-${VER}"{.out,}@echo "* LN '$@-$(OS)-${VER}' -> '$@' #"
-	@ln -sfF   "$*-$(OS)-${VER}"    "$@" && touch "$@-$(OS)-${VER}"
+	@echo "* IF '!defined(EXT_$*) -> MV" "$@-$(OS)-${VER}"{.tmp,}
+	@test -n  "$(EXT_$*)" ||       mv -f "$@-$(OS)-${VER}"{.tmp,}
+	@echo "* LN '$@-$(OS)-${VER}' -> '$@' #"
+	@ln -sfF   "$*-$(OS)-${VER}"     "$@" && touch "$@-$(OS)-${VER}"
 	@echo "* CHMOD '$@-$(OS)-${VER}' '$@' '$(ARCH)' #"
 	@chmod a+rx  "$@-$(OS)-${VER}"
 	@echo "* CHK: $@-$(OS)-${VER} --help"
