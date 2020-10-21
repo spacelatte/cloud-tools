@@ -35,3 +35,22 @@ jobs:
       with:
         name: k8s-tools
         path: ./binaries.tgz
+    - name: Create a draft release
+      uses: actions/create-release@v1
+      id: release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Automatic Release at ${{ github.ref }}
+        prerelease: yes
+        draft: yes
+    - name: Upload assets for rlease
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_name: k8s-tools.tar.gz
+        asset_path: ./binaries.tgz
+        asset_content_type: application/x-tar
