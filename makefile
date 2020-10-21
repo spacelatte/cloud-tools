@@ -129,7 +129,7 @@ bin/%: %.json bin
 	@echo "* CHMOD '$@-$(OS)-${VER}' '$@' '$(ARCH)' #"
 	@chmod a+rx  "$@-$(OS)-${VER}"
 	@echo "* CHK: $@-$(OS)-${VER} --help"
-	@exec "$@-$(OS)-${VER}" --help 1>/dev/null
+	@#exec "$@-$(OS)-${VER}" --help 1>/dev/null
 
 bin:
 	mkdir -p "$@"
