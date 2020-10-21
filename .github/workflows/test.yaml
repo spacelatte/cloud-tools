@@ -28,8 +28,10 @@ jobs:
       run:  make -C . -j 1
     - name: Move manifests next to binaries
       run:  mv -vf *.json bin/
+    - name: Archive and compress target
+      run:  tar -czvf binaries.tgz -C bin .
     - name: Upload built directory
       uses: actions/upload-artifact@v2
       with:
         name: k8s-tools
-        path: ./bin/
+        path: ./binaries.tgz
