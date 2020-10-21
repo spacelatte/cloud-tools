@@ -30,11 +30,6 @@ jobs:
       run:  mv -vf *.json bin/
     - name: Archive and compress target
       run:  tar -czvf binaries.tgz -C bin .
-    - name: Upload built directory
-      uses: actions/upload-artifact@v2
-      with:
-        name: k8s-tools
-        path: ./binaries.tgz
     - name: Create a draft release
       uses: actions/create-release@v1
       id: release
@@ -45,7 +40,7 @@ jobs:
         release_name: Automatic Release at ${{ github.ref }}
         prerelease: yes
         draft: yes
-    - name: Upload assets for rlease
+    - name: Upload assets for release
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,3 +49,8 @@ jobs:
         asset_name: k8s-tools.tar.gz
         asset_path: ./binaries.tgz
         asset_content_type: application/x-tar
+    - name: Upload build archive
+      uses: actions/upload-artifact@v2
+      with:
+        name: k8s-tools
+        path: ./binaries.tgz
