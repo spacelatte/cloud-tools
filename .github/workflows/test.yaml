@@ -26,10 +26,10 @@ jobs:
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Build with make
       run:  make -C . -j 1
-      env:
-        HOME: /tmp
+    - name: Move manifests next to binaries
+      run:  mv -vf *.json bin/
     - name: Upload built directory
       uses: actions/upload-artifact@v2
       with:
         name: k8s-tools
-        path: ./
+        path: ./bin/
