@@ -210,15 +210,16 @@ bin/%: %.json bin
 bin:
 	mkdir -p "$@"
 
-clean:
+clean: prune
 	rm -rf \
 		$(addsuffix .json, $(TOOLS) ) \
 		$(addprefix bin/, $(TOOLS) ) \
 		bin/*.tmp
+	find bin -type f -delete
 
 prune:
 	@echo Cleaning up broken links...
-	@find bin -type l -exec sh -c 'test -e "$1" || rm -vf "$1";' -- {} \;
+	@find bin -type l -exec sh -c 'test -e "$$1" || rm -vf "$$1";' -- {} \;
 
 list:
 	@echo $(TOOLS)
