@@ -1,22 +1,38 @@
 #!/usr/bin/env make -f
 
 TOOLS := \
-	kn \
+	captain \
+	civo \
+	consul \
+	copilot \
+	coredns \
+	ctop \
+	deno \
+	doctl \
+	ecs-cli \
+	eksctl \
+	etcd \
+	etcdctl \
+	helm \
+	jq \
 	k3d \
-	rke \
+	k3s \
 	kind \
+	kn \
+	kompose \
 	kops \
 	krew \
-	kubens \
-	kubectx \
 	kubectl \
-	kompose \
+	kubectx \
+	kubens \
 	minikube \
+	rke \
+	shellcheck \
 	skaffold \
 	stern \
-	helm \
-	coredns \
-	eksctl \
+	terraform \
+	traefik \
+	websocketd \
 
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
@@ -30,11 +46,15 @@ ifeq ($(ARCH),armv7l)
 	ARCH := armhf
 endif
 
+ifeq ($(ARCH),aarch64)
+	ARCH := arm64
+endif
+
 REL_kn = https://api.github.com/repos/knative/client/releases/tags/v0.18.1
 URL_kn = https://github.com/knative/client/releases/download/${VER}/kn-$(OS)-$(ARCH)
 
-# REL_k3s = https://api.github.com/repos/rancher/k3s/releases/latest
-# URL_k3s = https://github.com/rancher/k3s/releases/download/${VER}/k3s-$(ARCH)
+REL_k3s = https://api.github.com/repos/rancher/k3s/releases/latest
+URL_k3s = https://github.com/rancher/k3s/releases/download/${VER}/k3s$$(echo -$(ARCH) | grep -v amd64)
 
 REL_k3d = https://api.github.com/repos/rancher/k3d/releases/latest
 URL_k3d = https://github.com/rancher/k3d/releases/download/${VER}/k3d-$(OS)-$(ARCH)
@@ -44,8 +64,7 @@ URL_rke = https://github.com/rancher/rke/releases/download/${VER}/rke_$(OS)-$(AR
 
 REL_helm = https://api.github.com/repos/helm/helm/releases/latest
 URL_helm = https://get.helm.sh/helm-${VER}-$(OS)-$(ARCH).tar.gz
-EXT_helm = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; \
-	tar --strip=1 -OUxzvf "$@-$(OS)-${VER}.tmp" "$(OS)-$(ARCH)/$*" > "$@-$(OS)-${VER}"
+EXT_helm = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar --strip=1 -OUxzvf "$@-$(OS)-${VER}.tmp" "$(OS)-$(ARCH)/$*" > "$@-$(OS)-${VER}"
 
 REL_kind = https://api.github.com/repos/kubernetes-sigs/kind/releases/latest
 URL_kind = https://kind.sigs.k8s.io/dl/${VER}/kind-$(OS)-$(ARCH)
@@ -55,8 +74,7 @@ URL_kops = https://github.com/kubernetes/kops/releases/download/${VER}/kops-$(OS
 
 REL_krew = https://api.github.com/repos/kubernetes-sigs/krew/releases/latest
 URL_krew = https://github.com/kubernetes-sigs/krew/releases/download/${VER}/krew.tar.gz
-EXT_krew = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; \
-	tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*-$(OS)_$(ARCH)" > "$@-$(OS)-${VER}"
+EXT_krew = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*-$(OS)_$(ARCH)" > "$@-$(OS)-${VER}"
 
 REL_kubens = https://api.github.com/repos/ahmetb/kubectx/releases/latest
 URL_kubens = https://github.com/ahmetb/kubectx/releases/download/${VER}/kubens
@@ -84,17 +102,75 @@ URL_stern = https://github.com/wercker/stern/releases/download/${VER}/stern_$(OS
 
 REL_coredns = https://api.github.com/repos/coredns/coredns/releases/latest
 URL_coredns = https://github.com/coredns/coredns/releases/download/${VER}/coredns_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).tgz
-EXT_coredns = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; \
-	tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+EXT_coredns = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 
 REL_eksctl = https://api.github.com/repos/weaveworks/eksctl/releases/latest
 URL_eksctl = https://github.com/weaveworks/eksctl/releases/download/${VER}/eksctl_$(shell uname -s)_$(ARCH).tar.gz
-EXT_eksctl = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; \
-	tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+EXT_eksctl = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 
 # https://github.com/kubernetes-sigs/kustomize/releases/download/api%2Fv0.5.1/api_v0.5.1_darwin_amd64.tar.gz
-# https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.8.1/kustomize_v3.8.1_darwin_amd64.tar.gz
-# https://github.com/kubernetes-sigs/kubefed/releases/download/v0.3.1/kubefedctl-0.3.1-darwin-amd64.tgz
+REL_kustomize = https://api.github.com/repos/kubernetes-sigs/kustomize/releases/latest
+URL_kustomize = https://github.com/kubernetes-sigs/kustomize/releases/download/${VER}/kustomize_$$(echo ${VER} | cut -d/ -f2)_$(OS)_$(ARCH).tar.gz
+EXT_kustomize = file -bzI "$@-$(OS)-$$(echo ${VER} | cut -d/ -f2).tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-$$(echo ${VER} | cut -d/ -f2).tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_kubefed = https://api.github.com/repos/kubernetes-sigs/kubefed/releases/latest
+URL_kubefed = https://github.com/kubernetes-sigs/kubefed/releases/download/${VER}/kubefedctl-$$(echo ${VER} | cut -b2-)-$(OS)-$(ARCH).tgz
+EXT_kubefed = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_terraform = https://api.github.com/repos/hashicorp/terraform/releases/latest
+URL_terraform = https://releases.hashicorp.com/terraform/$$(echo ${VER} | cut -b2-)/terraform_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
+EXT_terraform = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_consul = https://api.github.com/repos/hashicorp/consul/releases/latest
+URL_consul = https://releases.hashicorp.com/consul/$$(echo ${VER} | cut -b2-)/consul_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
+EXT_consul = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_captain = https://api.github.com/repos/jenssegers/captain/releases/latest
+URL_captain = https://github.com/jenssegers/captain/releases/download/${VER}/captain-osx
+
+REL_deno = https://api.github.com/repos/denoland/deno/releases/latest
+URL_deno = https://github.com/denoland/deno/releases/download/${VER}/deno-$$(uname -m)-apple-$(OS).zip
+EXT_deno = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_etcd = https://api.github.com/repos/etcd-io/etcd/releases/latest
+URL_etcd = https://github.com/etcd-io/etcd/releases/download/${VER}/etcd-${VER}-$(OS)-$(ARCH).zip
+EXT_etcd = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "etcd-${VER}-$(OS)-$(ARCH)/$*" > "$@-$(OS)-${VER}"
+
+REL_etcdctl = $(REL_etcd)
+URL_etcdctl = $(URL_etcd)
+EXT_etcdctl = $(EXT_etcd)
+
+REL_copilot = https://api.github.com/repos/aws/copilot-cli/releases/latest
+URL_copilot = https://github.com/aws/copilot-cli/releases/download/${VER}/copilot-$(OS)$$(test $(OS) == linux && echo -$(ARCH))
+
+REL_ecs-cli = https://api.github.com/repos/aws/amazon-ecs-cli/releases/latest
+URL_ecs-cli = https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-$(OS)-$(ARCH)-${VER}
+
+REL_ctop = https://api.github.com/repos/bcicen/ctop/releases/latest
+URL_ctop = https://github.com/bcicen/ctop/releases/download/${VER}/ctop-$$(echo ${VER} | cut -b2-)-$(OS)-$(ARCH)
+
+REL_shellcheck = https://api.github.com/repos/koalaman/shellcheck/releases/latest
+URL_shellcheck = https://github.com/koalaman/shellcheck/releases/download/${VER}/shellcheck-${VER}.$(OS).$(shell uname -m).tar.xz
+EXT_shellcheck = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-xz' || exit 0; tar --strip=1 -OUxzvf "$@-$(OS)-${VER}.tmp" "shellcheck-${VER}/$*" > "$@-$(OS)-${VER}"
+
+REL_websocketd = https://api.github.com/repos/joewalnes/websocketd/releases/latest
+URL_websocketd = https://github.com/joewalnes/websocketd/releases/download/${VER}/websocketd-$$(echo ${VER} | cut -b2-)-$(OS)_$(ARCH).zip
+EXT_websocketd = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_jq = https://api.github.com/repos/stedolan/jq/releases/latest
+URL_jq = https://github.com/stedolan/jq/releases/download/${VER}/jq-$(shell echo $(OS) | grep -i linux || echo osx)-$(ARCH)
+
+REL_doctl = https://api.github.com/repos/digitalocean/doctl/releases/latest
+URL_doctl = https://github.com/digitalocean/doctl/releases/download/${VER}/doctl-$$(echo ${VER} | cut -b2-)-$(OS)-$(ARCH).tar.gz
+EXT_doctl = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_civo = https://api.github.com/repos/civo/cli/releases/latest
+URL_civo = https://github.com/civo/cli/releases/download/${VER}/civo-$$(echo ${VER} | cut -b2-)-$(OS)-$(ARCH).tar.gz
+EXT_civo = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_traefik = https://api.github.com/repos/traefik/traefik/releases/latest
+URL_traefik = https://github.com/traefik/traefik/releases/download/${VER}/traefik_${VER}_$(OS)_$(ARCH).tar.gz
+EXT_traefik = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 
 export COLUMNS = 50
 
@@ -135,4 +211,14 @@ bin:
 	mkdir -p "$@"
 
 clean:
-	rm -rf $(addprefix bin/, $(TOOLS) ) $(addsuffix .json, $(TOOLS) )
+	rm -rf \
+		$(addsuffix .json, $(TOOLS) ) \
+		$(addprefix bin/, $(TOOLS) ) \
+		bin/*.tmp
+
+prune:
+	@echo Cleaning up broken links...
+	@find bin -type l -exec sh -c 'test -e "$1" || rm -vf "$1";' -- {} \;
+
+list:
+	@echo $(TOOLS)
