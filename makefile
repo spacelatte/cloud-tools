@@ -8,6 +8,7 @@ TOOLS := \
 	coredns \
 	ctop \
 	deno \
+	direnv \
 	doctl \
 	ecs-cli \
 	eksctl \
@@ -28,10 +29,12 @@ TOOLS := \
 	minikube \
 	rke \
 	shellcheck \
+	simple-ec2 \
 	skaffold \
 	stern \
 	terraform \
 	traefik \
+	vault \
 	websocketd \
 
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -171,6 +174,19 @@ EXT_civo = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit
 REL_traefik = https://api.github.com/repos/traefik/traefik/releases/latest
 URL_traefik = https://github.com/traefik/traefik/releases/download/${VER}/traefik_${VER}_$(OS)_$(ARCH).tar.gz
 EXT_traefik = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_copilot = https://api.github.com/repos/aws/copilot-cli/releases/latest
+URL_copilot = https://github.com/aws/copilot-cli/releases/download/${VER}/copilot-$(OS)
+
+REL_simple-ec2 = https://api.github.com/repos/awslabs/aws-simple-ec2-cli/releases/latest
+URL_simple-ec2 = https://github.com/awslabs/aws-simple-ec2-cli/releases/download/${VER}/simple-ec2-$(OS)-$(ARCH)
+
+REL_vault = https://api.github.com/repos/hashicorp/vault/releases/latest
+URL_vault = https://releases.hashicorp.com/vault/$$(echo ${VER} | cut -b2-)/vault_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
+EXT_vault = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_direnv = https://api.github.com/repos/direnv/direnv/releases/latest
+URL_direnv = https://github.com/direnv/direnv/releases/download/${VER}/direnv.$(OS)-$(ARCH)
 
 export COLUMNS = 50
 
