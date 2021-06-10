@@ -1,6 +1,7 @@
 #!/usr/bin/env make -f
 
 TOOLS := \
+	calicoctl \
 	captain \
 	civo \
 	consul \
@@ -18,6 +19,7 @@ TOOLS := \
 	jq \
 	k3d \
 	k3s \
+	k9s \
 	kind \
 	kn \
 	kompose \
@@ -33,6 +35,7 @@ TOOLS := \
 	skaffold \
 	stern \
 	terraform \
+	terraform-ls \
 	traefik \
 	vault \
 	websocketd \
@@ -124,6 +127,10 @@ REL_terraform = https://api.github.com/repos/hashicorp/terraform/releases/latest
 URL_terraform = https://releases.hashicorp.com/terraform/$$(echo ${VER} | cut -b2-)/terraform_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
 EXT_terraform = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 
+REL_terraform-ls = https://api.github.com/repos/hashicorp/terraform-ls/releases/latest
+URL_terraform-ls = https://releases.hashicorp.com/terraform-ls/$$(echo ${VER} | cut -b2-)/terraform-ls_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
+EXT_terraform-ls = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
 REL_consul = https://api.github.com/repos/hashicorp/consul/releases/latest
 URL_consul = https://releases.hashicorp.com/consul/$$(echo ${VER} | cut -b2-)/consul_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
 EXT_consul = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
@@ -187,6 +194,16 @@ EXT_vault = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 
 
 REL_direnv = https://api.github.com/repos/direnv/direnv/releases/latest
 URL_direnv = https://github.com/direnv/direnv/releases/download/${VER}/direnv.$(OS)-$(ARCH)
+
+REL_calicoctl = https://api.github.com/repos/projectcalico/calicoctl/releases/latest
+URL_calicoctl = https://github.com/projectcalico/calicoctl/releases/download/${VER}/calicoctl-$(OS)-$(ARCH)
+
+REL_regctl = https://api.github.com/repos/regclient/regclient/releases/latest
+URL_regctl = https://github.com/regclient/regclient/releases/download/${VER}/regctl-$(OS)-$(ARCH)
+
+REL_k9s = https://api.github.com/repos/derailed/k9s/releases/latest
+URL_k9s = https://github.com/derailed/k9s/releases/download/${VER}/k9s_${VER}_$(shell uname -s)_$(shell uname -m).tar.gz
+EXT_k9s = file -bzI "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 
 export COLUMNS = 50
 
