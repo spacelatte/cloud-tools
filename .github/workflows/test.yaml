@@ -18,14 +18,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
     - name: Setup authentication
-      run:  |
-        echo token: ${TOKEN}
-        echo other: ${{ github.token }}
-        echo upper: ${{ secrets.GITHUB_TOKEN }}
-        echo lower: ${{ secrets.github_token }}
-        tee .auth <<< "-H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' "
       env:
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run:  |
+        git config github.user "x-access-token"
+        git config github.pat "${TOKEN}"
+        git config --get-regexp ^github
     - name: Build with make
       run:  make -C . -j 1
     - name: Move manifests next to binaries
@@ -56,5 +54,8 @@ jobs:
     - name: Upload build archive
       uses: actions/upload-artifact@v2
       with:
-        name: k8s-tools
+        name: k8s-tools.tgz
         path: ./binaries.tgz
+        retention-days: 360
+        if-no-files-found: error
+
