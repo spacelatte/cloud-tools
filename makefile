@@ -40,9 +40,11 @@ TOOLS := \
 	vault \
 	websocketd \
 
-OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
-ARCH := $(shell uname -m)
-AUTH := $(shell test -e .auth && cat .auth || echo)
+OS       := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+ARCH     := $(shell uname -m)
+GH_USER  := $(shell git config --global github.user || echo 1)
+GH_TOKEN := $(shell git config --global github.pat  || echo 1)
+AUTH     := $(shell test -e .auth && cat .auth || echo -u $(GH_USER):$(GH_TOKEN) )
 
 ifeq ($(ARCH),x86_64)
 	ARCH := amd64
