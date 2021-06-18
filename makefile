@@ -58,7 +58,7 @@ ifeq ($(ARCH),aarch64)
 	ARCH := arm64
 endif
 
-REL_kn = https://api.github.com/repos/knative/client/releases/tags/v0.18.1
+REL_kn = https://api.github.com/repos/knative/client/releases
 URL_kn = https://github.com/knative/client/releases/download/${VER}/kn-$(OS)-$(ARCH)
 
 REL_k3s = https://api.github.com/repos/rancher/k3s/releases
