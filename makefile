@@ -44,7 +44,7 @@ OS       := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH     := $(shell uname -m)
 GH_USER  := $(shell git config --global github.user || echo 1)
 GH_TOKEN := $(shell git config --global github.pat  || echo 1)
-AUTH     := $(shell test -e .auth && cat .auth || echo -u $(GH_USER):$(GH_TOKEN) )
+AUTH     := $(GH_USER):$(GH_TOKEN)
 
 ifeq ($(ARCH),x86_64)
 	ARCH := amd64
@@ -223,7 +223,7 @@ showbanner:
 .PRECIOUS: %.json
 %.json: .FORCE
 	@echo "* CURL -o '$@' '$(REL_$*)' #"
-	@curl --compressed -#4Lfm5 -o "$@" "$(REL_$*)" $$(test -s '$@' && echo -z '$@' ) $(AUTH)
+	@curl --compressed -#4Lfm5 -u "$(AUTH)" -o "$@" "$(REL_$*)" $$(test -s '$@' && echo -z '$@' ) \
 
 bin/%: export VER = $$( jq -r '.[].tag_name' '$<' | sort -Vr | head -1 )
 #bin/%: export VER = $$(grep -m1 'tag_name' '$<' | cut -d\" -f4 || head -1 '$<')
