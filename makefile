@@ -159,7 +159,7 @@ REL_ecs-cli = https://api.github.com/repos/aws/amazon-ecs-cli/releases/latest
 URL_ecs-cli = https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-$(OS)-$(ARCH)-${VER}
 
 REL_ctop = https://api.github.com/repos/bcicen/ctop/releases/latest
-URL_ctop = https://github.com/bcicen/ctop/releases/download/${VER}/ctop-$$(echo ${VER} | cut -b2-)-$(OS)-$(ARCH)
+URL_ctop = https://github.com/bcicen/ctop/releases/download/${VER}/ctop-${VER}-$(OS)-$(ARCH)
 
 REL_shellcheck = https://api.github.com/repos/koalaman/shellcheck/releases/latest
 URL_shellcheck = https://github.com/koalaman/shellcheck/releases/download/${VER}/shellcheck-${VER}.$(OS).$(shell uname -m).tar.xz
