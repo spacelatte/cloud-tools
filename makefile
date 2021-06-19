@@ -15,6 +15,7 @@ TOOLS := \
 	eksctl \
 	etcd \
 	etcdctl \
+	etcdutl \
 	helm \
 	jq \
 	k3d \
@@ -83,7 +84,7 @@ URL_kops = https://github.com/kubernetes/kops/releases/download/${VER}/kops-$(OS
 
 REL_krew = https://api.github.com/repos/kubernetes-sigs/krew/releases
 URL_krew = https://github.com/kubernetes-sigs/krew/releases/download/${VER}/krew.tar.gz
-EXT_krew = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*-$(OS)_$(ARCH)" > "$@-$(OS)-${VER}"
+EXT_krew = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "./$*-$(OS)_$(ARCH)" > "$@-$(OS)-${VER}"
 
 REL_kubens = https://api.github.com/repos/ahmetb/kubectx/releases
 URL_kubens = https://github.com/ahmetb/kubectx/releases/download/${VER}/kubens
@@ -145,12 +146,19 @@ URL_deno = https://github.com/denoland/deno/releases/download/${VER}/deno-$$(cc 
 EXT_deno = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 
 REL_etcd = https://api.github.com/repos/etcd-io/etcd/releases
-URL_etcd = https://github.com/etcd-io/etcd/releases/download/${VER}/etcd-${VER}-$(OS)-$(ARCH).zip
-EXT_etcd = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "etcd-${VER}-$(OS)-$(ARCH)/$*" > "$@-$(OS)-${VER}"
+URL_etcd = https://github.com/etcd-io/etcd/releases/download/${VER}/etcd-${VER}-$(OS)-$(ARCH).$(shell uname -s | sed 's/Darwin/zip/g' | sed 's/Linux/tar.gz/g')
+EXT_etcd = case $$(file -bz --mime-type "$@-$(OS)-${VER}.tmp") in \
+	*tar*) tar -OUxzvf "$@-$(OS)-${VER}.tmp" "etcd-${VER}-$(OS)-$(ARCH)/$*" > "$@-$(OS)-${VER}" ;; \
+	*zip*) unzip -p "$@-$(OS)-${VER}.tmp"    "etcd-${VER}-$(OS)-$(ARCH)/$*" > "$@-$(OS)-${VER}" ;; \
+	esac;
 
 REL_etcdctl = $(REL_etcd)
 URL_etcdctl = $(URL_etcd)
 EXT_etcdctl = $(EXT_etcd)
+
+REL_etcdutl = $(REL_etcd)
+URL_etcdutl = $(URL_etcd)
+EXT_etcdutl = $(EXT_etcd)
 
 REL_copilot = https://api.github.com/repos/aws/copilot-cli/releases
 URL_copilot = https://github.com/aws/copilot-cli/releases/download/${VER}/copilot-$(OS)$$(test $(OS) == linux && echo -$(ARCH))
@@ -159,7 +167,7 @@ REL_ecs-cli = https://api.github.com/repos/aws/amazon-ecs-cli/releases
 URL_ecs-cli = https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-$(OS)-$(ARCH)-${VER}
 
 REL_ctop = https://api.github.com/repos/bcicen/ctop/releases
-URL_ctop = https://github.com/bcicen/ctop/releases/download/${VER}/ctop-$$(echo ${VER} | cut -b2-)-$(OS)-$(ARCH)
+URL_ctop = https://github.com/bcicen/ctop/releases/download/${VER}/ctop-$$(echo ${VER} | tr -d v)-$(OS)-$(ARCH)
 
 REL_shellcheck = https://api.github.com/repos/koalaman/shellcheck/releases
 URL_shellcheck = https://github.com/koalaman/shellcheck/releases/download/${VER}/shellcheck-${VER}.$(OS).$(shell uname -m).tar.xz
@@ -170,7 +178,7 @@ URL_websocketd = https://github.com/joewalnes/websocketd/releases/download/${VER
 EXT_websocketd = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/zip' || exit 0; unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 
 REL_jq = https://api.github.com/repos/stedolan/jq/releases
-URL_jq = https://github.com/stedolan/jq/releases/download/${VER}/jq-$(shell echo $(OS) | grep -i linux || echo osx)-$(ARCH)
+URL_jq = https://github.com/stedolan/jq/releases/download/${VER}/jq-$(shell echo $(OS) | grep -i linux64 || echo osx-$(ARCH))
 
 REL_doctl = https://api.github.com/repos/digitalocean/doctl/releases
 URL_doctl = https://github.com/digitalocean/doctl/releases/download/${VER}/doctl-$$(echo ${VER} | cut -b2-)-$(OS)-$(ARCH).tar.gz
@@ -183,6 +191,7 @@ EXT_civo = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-t
 REL_traefik = https://api.github.com/repos/traefik/traefik/releases
 URL_traefik = https://github.com/traefik/traefik/releases/download/${VER}/traefik_${VER}_$(OS)_$(ARCH).tar.gz
 EXT_traefik = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' || exit 0; tar -OUxzvf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+SRT_traefik = tag_name
 
 REL_copilot = https://api.github.com/repos/aws/copilot-cli/releases
 URL_copilot = https://github.com/aws/copilot-cli/releases/download/${VER}/copilot-$(OS)
@@ -213,21 +222,26 @@ all: $(addprefix bin/, $(TOOLS) ) showbanner
 	# That is all...
 
 showbanner:
-	@tr : '\n' <<< "$(PATH)" | grep -qi "$(shell realpath "$(CURDIR)/bin")" || (true \
-		&& echo '**************************************************************' \
-		&& echo '==> ADD $(PWD)/bin or $(CURDIR)/bin to $$PATH !!! <==' \
-		&& echo '**************************************************************' \
+	@echo "$(PATH)" | tr : '\n' | grep -qi "$(shell realpath "$(CURDIR)/bin")" || (true \
+		&& echo '***********************************************************' \
+		&& echo '=====> ADD $(PWD)/bin or $(CURDIR)/bin to $$PATH !!! <=====' \
+		&& echo '***********************************************************' \
 	)
 
 .FORCE:
-.PRECIOUS: %.json
+.PRECIOUS: %.json %.txt
 %.json: .FORCE
 	@echo "* CURL -o '$@' '$(REL_$*)' #"
 	@curl --compressed -#4Lfm5 -u "$(AUTH)" -o "$@" "$(REL_$*)" $$(test -s '$@' && echo -z '$@' ) \
 
-bin/%: export VER = $$( jq -r '.[].tag_name' '$<' | sort -Vr | head -1 )
+#bin/%: export VER = $$( jq -r "sort_by(.[\$$ARGS.positional[0] // \"published_at\"])[-1].tag_name" '$<' --args "$(SRT_$*)")
 #bin/%: export VER = $$(grep -m1 'tag_name' '$<' | cut -d\" -f4 || head -1 '$<')
-bin/%: %.json bin
+%.txt: %.json
+	@jq -r 'sort_by(.[$$ARGS.positional[0] // "published_at"])[-1]' '$<' --args $(SRT_$*) \
+	| tee "$@" >/dev/null
+
+bin/%: export VER = $$(jq -r '.tag_name' '$<')
+bin/%: %.txt bin
 	@echo            "* CURL -o '$@-$(OS)-${VER}.tmp' '$(URL_$*)' #"
 	@curl --compressed -#4Lf -o "$@-$(OS)-${VER}.tmp" "$(URL_$*)" $$(test -s '$@' && echo -z "$@-$(OS)-${VER}" )
 	@#echo "* IF size($@-$(OS)-${VER}.tmp)"  # "-> MV"    "$@-$(OS)-${VER}"{.tmp,}
@@ -249,6 +263,7 @@ bin:
 clean: prune
 	rm -rf \
 		$(addsuffix .json, $(TOOLS) ) \
+		$(addsuffix .txt, $(TOOLS) ) \
 		$(addprefix bin/, $(TOOLS) ) \
 		bin/*.tmp
 	find bin -type f -delete
