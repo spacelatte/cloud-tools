@@ -27,7 +27,7 @@ You can verify it by: `git config --get-regexp ^github`
 You can see them by executing: `make list`
 
 Downloadable binaries' archive are also available in 
-[Releases](./releases) section.
+[Releases](../../releases) section.
 
 ## Cleaning up
 

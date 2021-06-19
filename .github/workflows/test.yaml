@@ -24,6 +24,12 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     steps:
 
+    - name: Caches
+      uses: actions/cache@v2
+      with:
+        path: ./
+        key: ${{ github.repository }}/${{ matrix.os }}
+
     - name: Checkout repository
       uses: actions/checkout@v2
 
@@ -36,7 +42,7 @@ jobs:
         git config --get-regexp ^github
 
     - name: Build with make
-      run:  make -C . -j 1
+      run:  make -C . -j $(nproc)
 
     - name: Move manifests next to binaries
       run:  mv -vf *.json bin/
@@ -64,11 +70,13 @@ jobs:
     - name: Create a draft release
       uses: actions/create-release@v1
       id: release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Automatic Release at ${{ github.ref }}
         prerelease: true
-        draft: true
+        draft: false
 
   upload:
     strategy:
@@ -88,12 +96,16 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: k8s-tools-${{ matrix.os }}.tgz
-        path: ./binaries.tgz
+        path: ./
+
+    - run: find . -ls
 
     - name: Upload assets for release
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.release.outputs.upload_url }}
-        asset_name: tools-${{ matrix.os }}.tar.gz
+        asset_name: ${{ matrix.os }}.tgz
         asset_path: ./binaries.tgz
         asset_content_type: application/x-tar
