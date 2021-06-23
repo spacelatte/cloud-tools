@@ -98,8 +98,6 @@ jobs:
         name: k8s-tools-${{ matrix.os }}.tgz
         path: ./
 
-    - run: find . -ls
-
     - name: Upload assets for release
       uses: actions/upload-release-asset@v1
       env:
