@@ -1,0 +1,52 @@
+#!/usr/bin/env -S docker compose -p tools -f
+version: "3.8"
+
+networks:
+  default:
+    name: cloud.net
+    internal: false
+    external: false
+    attachable: true
+
+volumes:
+  binaries:
+    name: cloud.bin
+    external: false
+
+services:
+
+  #shell:
+  #  image: busybox:latest
+  #  command: sleep inf
+  #  working_dir: /home
+  #  networks:
+  #  - default
+  #  volumes:
+  #  - data:/home:ro
+
+  tests:
+    image: cloud-tools:latest
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    stop_signal: SIGTERM
+    working_dir: /home
+    environment:
+    - GITHUB_USER
+    - GITHUB_TOKEN
+    entrypoint:
+    - /bin/bash
+    - -xec
+    command:
+    - |
+      trap 'sleep inf' ERR
+      git config --global github.user ${GITHUB_USER:-user}
+      git config --global github.pat  ${GITHUB_TOKEN:-pat}
+      echo "::set-output name=tools::$$(make --no-print-directory -sC . list)"
+      make all extras completions
+    - --
+    networks:
+    - default
+    volumes:
+    - binaries:/home/bin:rw
+    - ./makefile:/home/makefile:ro

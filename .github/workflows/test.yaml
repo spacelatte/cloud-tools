@@ -10,6 +10,9 @@ on:
   pull_request:
     branches:
     - master
+concurrency:
+  group: ${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -22,6 +25,14 @@ jobs:
         - ubuntu
     name: Build for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-latest
+
+    concurrency:
+      group: ${{ github.repository }}/${{ matrix.os }}
+      cancel-in-progress: false
+
+    outputs:
+      listofutils: ${{ steps.list.outputs.tools }}
+
     steps:
 
     - name: Caches
@@ -44,17 +55,18 @@ jobs:
     - name: Build with make
       run:  make -C . -j $(nproc)
 
-    - name: Move manifests next to binaries
-      run:  mv -vf *.json bin/
+    - name: Get list of tools
+      id:   list
+      run:  echo "::set-output name=tools::$(make --no-print-directory -sC . list)"
 
     - name: Archive and compress target
-      run:  tar -czvf binaries.tgz -C bin .
+      run:  tar -czvf bin-${{ matrix.os }}.tgz -C bin --exclude='*.tmp' .
 
     - name: Upload build archive
       uses: actions/upload-artifact@v2
       with:
         name: k8s-tools-${{ matrix.os }}.tgz
-        path: ./binaries.tgz
+        path: ./bin-${{ matrix.os }}.tgz
         retention-days: 30
         if-no-files-found: error
 
@@ -67,6 +79,21 @@ jobs:
     outputs:
       upload_url: ${{ steps.release.outputs.upload_url }}
     steps:
+
+    - name: Create release body
+      run:  |
+        {
+          echo "<details><summary>List of utilities</summary>"
+          echo
+          echo "${{ needs.build.outputs.listofutils }}" \
+          | xargs -n1 \
+          | sed 's:^:- :g' \
+          ;
+          echo
+          echo "</details>"
+        } \
+        | tee -a body.md
+
     - name: Create a draft release
       uses: actions/create-release@v1
       id: release
@@ -74,7 +101,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: Automatic Release at ${{ github.ref }}
+        release_name: "Release: ${{ github.ref }}"
+        body_path: ./body.md
         prerelease: true
         draft: false
 
@@ -105,5 +133,5 @@ jobs:
       with:
         upload_url: ${{ needs.release.outputs.upload_url }}
         asset_name: ${{ matrix.os }}.tgz
-        asset_path: ./binaries.tgz
+        asset_path: ./bin-${{ matrix.os }}.tgz
         asset_content_type: application/x-tar
