@@ -31,6 +31,7 @@ TOOLS := \
 	kubectx \
 	kubens \
 	minikube \
+	nomad \
 	rke \
 	shellcheck \
 	simple-ec2 \
@@ -39,6 +40,7 @@ TOOLS := \
 	terraform \
 	terraform-ls \
 	traefik \
+	typesense \
 	vault \
 	websocketd \
 	yq \
@@ -245,6 +247,16 @@ CPL_yq = bin/$* shell-completion $(shell basename "$(SHELL)")
 REL_caddy = https://api.github.com/repos/caddyserver/caddy/releases
 URL_caddy = https://github.com/caddyserver/caddy/releases/download/${VER}/caddy_$$(echo ${VER} | cut -b2-)_$$(echo ${OS} | sed s:darwin:mac:g)_$(ARCH).tar.gz
 EXT_caddy = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' && tar -OUxzf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_typesense = https://api.github.com/repos/typesense/typesense/releases
+URL_typesense = https://dl.typesense.org/releases/$$(echo ${VER} | cut -b2-)/typesense-server-$$(echo ${VER} | cut -b2-)-$(OS)-$(ARCH).tar.gz
+EXT_typesense = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' && tar -OUxzf "$@-$(OS)-${VER}.tmp" "$*-server" > "$@-$(OS)-${VER}"
+CPL_typesense = echo : bin/$* completion $(shell basename "$(SHELL)")
+
+REL_nomad = https://api.github.com/repos/hashicorp/nomad/releases
+URL_nomad = https://releases.hashicorp.com/nomad/$$(echo ${VER} | cut -b2-)/nomad_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
+EXT_nomad = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q -e 'application/x-executable' -e 'application/.*zip.*' && unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+CPL_nomad = echo complete -C "$(shell pwd)/bin/$*" $*
 
 export COLUMNS = 50
 
