@@ -1,6 +1,7 @@
 #!/usr/bin/env make -f
 
 TOOLS := \
+	aws-iam-authenticator \
 	caddy \
 	calicoctl \
 	captain \
@@ -39,6 +40,7 @@ TOOLS := \
 	stern \
 	terraform \
 	terraform-ls \
+	terraform-lsp \
 	traefik \
 	typesense \
 	vault \
@@ -93,7 +95,7 @@ URL_kops = https://github.com/kubernetes/kops/releases/download/${VER}/kops-$(OS
 CPL_kops = bin/$* completion $(shell basename "$(SHELL)")
 
 REL_krew = https://api.github.com/repos/kubernetes-sigs/krew/releases
-URL_krew = https://github.com/kubernetes-sigs/krew/releases/download/${VER}/krew.tar.gz
+URL_krew = https://github.com/kubernetes-sigs/krew/releases/download/${VER}/krew-$(OS)_$(ARCH).tar.gz
 EXT_krew = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' && tar -OUxzf "$@-$(OS)-${VER}.tmp" "./$*-$(OS)_$(ARCH)" > "$@-$(OS)-${VER}"
 
 REL_kubens = https://api.github.com/repos/ahmetb/kubectx/releases
@@ -152,6 +154,10 @@ CPL_terraform = echo complete -C "$(shell pwd)/bin/$*" $*
 REL_terraform-ls = https://api.github.com/repos/hashicorp/terraform-ls/releases
 URL_terraform-ls = https://releases.hashicorp.com/terraform-ls/$$(echo ${VER} | cut -b2-)/terraform-ls_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
 EXT_terraform-ls = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q -e 'application/x-executable' -e 'application/.*zip.*' && unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
+
+REL_terraform-lsp = https://api.github.com/repos/juliosueiras/terraform-lsp/releases
+URL_terraform-lsp = https://github.com/juliosueiras/terraform-lsp/releases/download/${VER}/terraform-lsp_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).tar.gz
+EXT_terraform-lsp = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' && tar -OUxzf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 
 REL_consul = https://api.github.com/repos/hashicorp/consul/releases
 URL_consul = https://releases.hashicorp.com/consul/$$(echo ${VER} | cut -b2-)/consul_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
@@ -258,6 +264,9 @@ URL_nomad = https://releases.hashicorp.com/nomad/$$(echo ${VER} | cut -b2-)/noma
 EXT_nomad = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q -e 'application/x-executable' -e 'application/.*zip.*' && unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 CPL_nomad = echo complete -C "$(shell pwd)/bin/$*" $*
 
+REL_aws-iam-authenticator = https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases
+URL_aws-iam-authenticator = https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/${VER}/aws-iam-authenticator_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH)
+
 export COLUMNS = 50
 
 all: $(addprefix bin/, $(TOOLS) ) showbanner
@@ -328,7 +337,11 @@ bin:
 %.cpl: # bin/%
 	@test -z "$(CPL_$*)" || "$(SHELL)" -ec '$(CPL_$*)'
 
-clean: prune
+clean:
+	@find bin -type f -name '*.tmp' -delete
+	@echo $(TOOLS) | xargs -n1 -- bash -c 'find bin -type f -name "$$1*" | grep -v $$(basename $$(realpath bin/$$1))- | xargs rm -vf' --
+
+remove: prune
 	rm -rf \
 		$(addsuffix .json, $(TOOLS) ) \
 		$(addsuffix .txt, $(TOOLS) ) \
@@ -341,4 +354,4 @@ prune:
 	@find bin -type l -exec sh -c 'test -e "$$1" || rm -vf "$$1";' -- {} \;
 
 list:
-	@echo $(TOOLS)
+	@echo $(TOOLS) | xargs -n1 -- echo
