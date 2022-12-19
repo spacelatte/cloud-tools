@@ -18,7 +18,9 @@ TOOLS := \
 	etcd \
 	etcdctl \
 	etcdutl \
+	gh \
 	helm \
+	infracost \
 	jq \
 	k3d \
 	k3s \
@@ -50,8 +52,8 @@ TOOLS := \
 OS       := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH     := $(shell uname -m)
 TRIPLET  := $(shell cc -dumpmachine | sed 's/[0-9.]*$$//g')
-GH_USER  := $(shell git config --global github.user || echo 1)
-GH_TOKEN := $(shell git config --global github.pat  || echo 1)
+GH_USER  := $(shell git config github.self.user || echo 1)
+GH_TOKEN := $(shell git config github.self.pat  || echo 1)
 AUTH     := $(GH_USER):$(GH_TOKEN)
 SHELL    := /bin/bash
 
@@ -123,9 +125,11 @@ URL_skaffold = https://storage.googleapis.com/skaffold/releases/${VER}/skaffold-
 URL_skaffold = https://github.com/GoogleContainerTools/skaffold/releases/download/${VER}/skaffold-$(OS)-$(ARCH)
 CPL_skaffold = bin/$* completion $(shell basename "$(SHELL)")
 
-REL_stern = https://api.github.com/repos/wercker/stern/releases
-URL_stern = https://github.com/wercker/stern/releases/download/${VER}/stern_$(OS)_$(ARCH)
+REL_stern = https://api.github.com/repos/stern/stern/releases
+URL_stern = https://github.com/stern/stern/releases/download/${VER}/stern_$$(echo $(VER) | cut -b2-)_$(OS)_$(ARCH).tar.gz
+EXT_stern = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' && tar -OUxzf "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
 CPL_stern = bin/$* --completion $(shell basename "$(SHELL)")
+SRT_stern = id
 
 REL_coredns = https://api.github.com/repos/coredns/coredns/releases
 URL_coredns = https://github.com/coredns/coredns/releases/download/${VER}/coredns_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).tgz
@@ -149,7 +153,7 @@ CPL_kubefed = bin/$* completion $(shell basename "$(SHELL)")
 REL_terraform = https://api.github.com/repos/hashicorp/terraform/releases
 URL_terraform = https://releases.hashicorp.com/terraform/$$(echo ${VER} | cut -b2-)/terraform_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
 EXT_terraform = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q -e 'application/x-executable' -e 'application/.*zip.*' && unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
-CPL_terraform = echo complete -C "$(shell pwd)/bin/$*" $*
+CPL_terraform = echo complete -C "$(shell pwd)/bin/$*" "$*"
 
 REL_terraform-ls = https://api.github.com/repos/hashicorp/terraform-ls/releases
 URL_terraform-ls = https://releases.hashicorp.com/terraform-ls/$$(echo ${VER} | cut -b2-)/terraform-ls_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
@@ -262,10 +266,19 @@ CPL_typesense = echo : bin/$* completion $(shell basename "$(SHELL)")
 REL_nomad = https://api.github.com/repos/hashicorp/nomad/releases
 URL_nomad = https://releases.hashicorp.com/nomad/$$(echo ${VER} | cut -b2-)/nomad_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH).zip
 EXT_nomad = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q -e 'application/x-executable' -e 'application/.*zip.*' && unzip -p "$@-$(OS)-${VER}.tmp" "$*" > "$@-$(OS)-${VER}"
-CPL_nomad = echo complete -C "$(shell pwd)/bin/$*" $*
+CPL_nomad = echo complete -C "$(shell pwd)/bin/$*" "$*"
 
 REL_aws-iam-authenticator = https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases
 URL_aws-iam-authenticator = https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/${VER}/aws-iam-authenticator_$$(echo ${VER} | cut -b2-)_$(OS)_$(ARCH)
+
+REL_infracost = https://api.github.com/repos/infracost/infracost/releases
+URL_infracost = https://github.com/infracost/infracost/releases/download/${VER}/infracost-$(OS)-$(ARCH).tar.gz
+EXT_infracost = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' && tar -OUxzf "$@-$(OS)-${VER}.tmp" "$*-$(OS)-$(ARCH)" > "$@-$(OS)-${VER}"
+
+REL_gh = https://api.github.com/repos/cli/cli/releases
+URL_gh = https://github.com/cli/cli/releases/download/${VER}/gh_$$(echo ${VER} | cut -b2-)_$$(echo $(OS) | sed s:darwin:macOS:g)_$(ARCH).tar.gz
+EXT_gh = file -bz --mime-type "$@-$(OS)-${VER}.tmp" | grep -q 'application/x-tar' && tar --strip=1 -OUxzf "$@-$(OS)-${VER}.tmp" "gh_$$(echo ${VER} | cut -b2-)_$$(echo $(OS) | sed s:darwin:macOS:g)_$(ARCH)/bin/$*" > "$@-$(OS)-${VER}"
+CPL_gh = bin/$* completion -s $(shell basename "$(SHELL)")
 
 export COLUMNS = 50
 
@@ -311,7 +324,7 @@ extras: bin/krew
 #bin/%: export VER = $$( jq -r "sort_by(.[\$$ARGS.positional[0] // \"published_at\"])[-1].tag_name" '$<' --args "$(SRT_$*)")
 #bin/%: export VER = $$(grep -m1 'tag_name' '$<' | cut -d\" -f4 || head -1 '$<')
 %.txt: %.json
-	@jq -r 'sort_by(.[$$ARGS.positional[0] // "published_at"])[-1]' '$<' --args $(SRT_$*) \
+	@jq -r 'if type == "object" then . else (sort_by(.[$$ARGS.positional[0] // "published_at"])[-1]) end' '$<' --args $(SRT_$*) \
 	| tee "$@" >/dev/null
 
 bin/%: export VER = $$(jq -r '.tag_name' '$<')
@@ -321,7 +334,7 @@ bin/%: %.txt bin
 	@#echo "# IF size($@-$(OS)-${VER}.tmp)"  # "-> MV"    "$@-$(OS)-${VER}"{.tmp,}
 	@#test -s        "$@-$(OS)-${VER}.tmp"   #&&   mv -vf "$@-$(OS)-${VER}"{.tmp,}  ||  rm -vf "$@-$(OS)-${VER}.tmp"
 	@echo "# IF ' defined(EXT_$*) -> EXEC (EXT_$*)' #" # "IF '$(EXT_$*)' -> '$(EXT_$*)' #"
-	@test -z  "$(EXT_$*)" || $(SHELL) -ec '($(EXT_$*)) && touch "$@-$(OS)-${VER}";'
+	@test -z  "$(EXT_$*)" || $(SHELL) -xec '($(EXT_$*)) && touch "$@-$(OS)-${VER}";'
 	@echo "# IF '!defined(EXT_$*) -> LN  '$*-$(OS)-${VER}.tmp' -> '$@-$(OS)-${VER}' #"
 	@test -n  "$(EXT_$*)" ||     ln -sfF "$*-$(OS)-${VER}.tmp"    "$@-$(OS)-${VER}" #
 	@echo "# LN '$*-$(OS)-${VER}' -> '$@' #"
